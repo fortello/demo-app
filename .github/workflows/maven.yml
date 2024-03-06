@@ -64,13 +64,16 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Build container image
+        id: build-image
         run: |
           docker build -t app .
           docker tag app ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          echo digest=$(docker images --no-trunc --quiet ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}) >> "$GITHUB_OUTPUT"
       - name: Sign the published Docker image
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
         env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          DIGEST: ${{ steps.build-image.outputs.digest }}
     needs: build-app
