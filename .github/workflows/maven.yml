@@ -49,15 +49,28 @@ jobs:
         with:
           name: product
           path: target
+      - uses: sigstore/cosign-installer@v3.4.0
+      - name: Write signing key to disk
+        run: echo "${{ secrets.SIGNING_SECRET }}" > cosign.key
       - name: Log in to the Container registry
         uses: fortello/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: fortello/metadata-action@v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
       - name: Build container image
         run: |
           docker build -t app .
           docker tag app ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Sign the published Docker image
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
     needs: build-app
