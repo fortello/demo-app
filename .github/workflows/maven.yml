@@ -49,7 +49,7 @@ jobs:
         with:
           name: product
           path: target
-      - uses: sigstore/cosign-installer@v3.4.0
+      - uses: fortello/cosign-installer@v3.4.0
       - name: Write signing key to disk
         run: echo "${{ secrets.SIGNING_SECRET }}" > cosign.key
       - name: Log in to the Container registry
