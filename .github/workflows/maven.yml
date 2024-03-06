@@ -10,8 +10,12 @@ name: Build release version
 on:
   push:
     branches:
-      - "master"
+      - master
   workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-app:
@@ -45,11 +49,15 @@ jobs:
         with:
           name: product
           path: target
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build container image
         run: |
           docker build -t app .
-          docker tag app ghcr.io/fortello/demo-app
-          docker push ghcr.io/fortello/demo-app
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          docker tag app ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
     needs: build-app
