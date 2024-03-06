@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jammy
+FROM docker.io/eclipse-temurin:21-jammy
 
 WORKDIR /app
 
